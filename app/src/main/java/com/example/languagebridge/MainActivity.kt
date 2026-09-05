@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -14,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.example.languagebridge.ui.theme.LanguageBridgeTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.getValue
@@ -42,8 +40,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(
-    name: String,
-    modifier: Modifier = Modifier
+    viewModel: TranslatorViewModel,
+    onRequestMicPermission: () -> Unit,
+    modifier: Modifier = Modifier,
+    hasMicPermission: Boolean, //разрешения на микрофон
+
 ) {
     var sourceLanguage by remember { mutableStateOf("Русский") }
 
@@ -55,13 +56,9 @@ fun Greeting(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Language Bridge"
-        )
+        Text(text = "Language Bridge")
 
-        Text(
-            text = "Язык оригинала"
-        )
+        Text(text = "Язык оригинала")
 
         Button(
             onClick = {}
@@ -92,6 +89,11 @@ fun Greeting(
             onClick = {}
         ) {
             Text("Продолжить")
+        }
+        Button(
+            onClick = {}
+        ) {
+
         }
     }
 }
