@@ -7,7 +7,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -21,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import com.example.languagebridge.data.AzureTranslationService
 import com.example.languagebridge.data.TranslatorViewModel
@@ -67,6 +77,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+
+
 @Composable
 fun Greeting(
     viewModel: TranslatorViewModel,
@@ -75,68 +88,117 @@ fun Greeting(
     modifier: Modifier = Modifier
 ) {
     var sourceLanguage by remember { mutableStateOf("Русский") }
-
     val translationLanguage =
         if (sourceLanguage == "Русский") "Հայերեն" else "Русский"
 
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Language Bridge")
+    // Каждый список хранит позицию прокрутки своей LazyColumn отдельно
+    val armenianListState = rememberLazyListState()
+    val russianListState = rememberLazyListState()
 
-        Text(text = "Язык оригинала")
-
-        Button(
-            onClick = {}
-        ) {
-            Text(sourceLanguage)
+    // Срабатывает заново каждый раз, когда меняется conversation.size —
+    // то есть когда добавляется новая реплика. Прокручиваем оба списка к последнему элементу.
+    LaunchedEffect(viewModel.conversation.size) {
+        val lastIndex = viewModel.conversation.size - 1
+        if (lastIndex >= 0) {
+            armenianListState.animateScrollToItem(lastIndex)
+            russianListState.animateScrollToItem(lastIndex)
         }
+    }
 
-        Button(
-            onClick = {
-                sourceLanguage =
-                    if (sourceLanguage == "Русский") "Հայերեն" else "Русский"
+    Column(modifier = modifier.fillMaxSize()) {
+
+        // Верхняя панель — армянский
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .background(Color(0xFF1E1E1E)) // тёмно-серый фон, чтобы отличался от чёрного экрана
+        ) {
+            if (viewModel.conversation.isEmpty()) {
+                Text(
+                    text = "Здесь появится текст на армянском",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .rotate(180f)
+                )
+            } else {
+                LazyColumn(
+                    state = armenianListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .rotate(180f)
+                        .padding(12.dp)
+                ) {
+                    items(viewModel.conversation) { turn ->
+                        Text(text = turn.armenianText, modifier = Modifier.padding(vertical = 4.dp))
+                    }
+                }
             }
-        ) {
-            Text("⇅")
         }
 
-        Text(text = "Язык перевода")
-
-        Button(
-            onClick = {}
+        // Центральная панель управления — фиксированной высоты, без weight
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(vertical = 8.dp)
         ) {
-            Text(translationLanguage)
-        }
+            Text(text = "Language Bridge")
 
-        Button(
-            onClick = {
+            Row {
+                Button(onClick = {}) { Text(sourceLanguage) }
+                Button(onClick = {
+                    sourceLanguage =
+                        if (sourceLanguage == "Русский") "Հայերեն" else "Русский"
+                }) { Text("⇅") }
+                Button(onClick = {}) { Text(translationLanguage) }
+            }
+
+            Button(onClick = {
                 if (hasMicPermission) {
                     viewModel.startTranslation(sourceLanguage, translationLanguage)
                 } else {
                     onRequestMicPermission()
                 }
+            }) {
+                Text(
+                    when {
+                        !hasMicPermission -> "Разрешить микрофон"
+                        viewModel.isBusy -> "Слушаю..."
+                        else -> "Продолжить"
+                    }
+                )
             }
-        ) {
-            Text(
-                when {
-                    !hasMicPermission -> "Разрешить микрофон"
-                    viewModel.isBusy -> "Слушаю..."
-                    else -> "Продолжить"
-                }
-            )
+
+            viewModel.errorMessage?.let {
+                Text("Ошибка: $it")
+            }
         }
 
-        if (viewModel.recognizedText.isNotEmpty()) {
-            Text("Вы сказали: ${viewModel.recognizedText}")
-        }
-        if (viewModel.translatedText.isNotEmpty()) {
-            Text("Перевод: ${viewModel.translatedText}")
-        }
-        viewModel.errorMessage?.let {
-            Text("Ошибка: $it")
+        // Нижняя панель — русский, обычная ориентация
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .background(Color(0xFF1E1E1E))
+        ) {
+            if (viewModel.conversation.isEmpty()) {
+                Text(
+                    text = "Здесь появится текст на русском",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+
+                )
+            } else {
+                LazyColumn(
+                    state = russianListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp)
+                ) {
+                    items(viewModel.conversation) { turn ->
+                        Text(text = turn.russianText, modifier = Modifier.padding(vertical = 4.dp))
+                    }
+                }
+            }
         }
     }
 }
