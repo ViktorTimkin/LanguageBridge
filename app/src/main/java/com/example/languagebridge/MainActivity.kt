@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import com.example.languagebridge.data.AzureTranslationService
+import com.example.languagebridge.data.Language
 import com.example.languagebridge.data.TranslatorViewModel
 import com.example.languagebridge.ui.theme.LanguageBridgeTheme
 
@@ -87,9 +88,8 @@ fun Greeting(
     onRequestMicPermission: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var sourceLanguage by remember { mutableStateOf("Русский") }
-    val translationLanguage =
-        if (sourceLanguage == "Русский") "Հայերեն" else "Русский"
+    var sourceLanguage by remember { mutableStateOf(Language.RUSSIAN) }
+    val targetLanguage = sourceLanguage.other()
 
     // Каждый список хранит позицию прокрутки своей LazyColumn отдельно
     val armenianListState = rememberLazyListState()
@@ -136,7 +136,7 @@ fun Greeting(
             }
         }
 
-        // Центральная панель управления — фиксированной высоты, без weight
+// Центральная панель управления — фиксированной высоты, без weight
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(vertical = 8.dp)
@@ -144,17 +144,28 @@ fun Greeting(
             Text(text = "Language Bridge")
 
             Row {
-                Button(onClick = {}) { Text(sourceLanguage) }
+                Button(
+                    onClick = { /* выбор языка вручную пока не реализован */ }
+                ) {
+                    Text(sourceLanguage.displayName)
+                }
+
                 Button(onClick = {
-                    sourceLanguage =
-                        if (sourceLanguage == "Русский") "Հայերեն" else "Русский"
-                }) { Text("⇅") }
-                Button(onClick = {}) { Text(translationLanguage) }
+                    sourceLanguage = sourceLanguage.other()
+                }) {
+                    Text("⇅")
+                }
+
+                Button(
+                    onClick = { /* выбор языка вручную пока не реализован */ }
+                ) {
+                    Text(targetLanguage.displayName)
+                }
             }
 
             Button(onClick = {
                 if (hasMicPermission) {
-                    viewModel.startTranslation(sourceLanguage, translationLanguage)
+                    viewModel.startTranslation(sourceLanguage, targetLanguage)
                 } else {
                     onRequestMicPermission()
                 }

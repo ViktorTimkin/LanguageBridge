@@ -28,6 +28,16 @@ class AzureTranslationService(
         config.speechRecognitionLanguage = sourceLang
         config.addTargetLanguage(targetLangShort)
 
+        // Даём больше времени на паузы внутри фразы, прежде чем считать её законченной
+        config.setProperty(
+            com.microsoft.cognitiveservices.speech.PropertyId.Speech_SegmentationSilenceTimeoutMs,
+            "1500" // было по умолчанию гораздо меньше
+        )
+        // Сколько ждать, прежде чем человек вообще начнёт говорить
+        config.setProperty(
+            com.microsoft.cognitiveservices.speech.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
+            "10000"
+        )
         val audioConfig = AudioConfig.fromDefaultMicrophoneInput()
         val recognizer = TranslationRecognizer(config, audioConfig)
 

@@ -18,18 +18,17 @@ class TranslatorViewModel(
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
-    fun startTranslation(sourceLanguage: String, targetLanguage: String) {
+    fun startTranslation(sourceLanguage: Language, targetLanguage: Language) {
         isBusy = true
         errorMessage = null
 
-        val sourceLocal = LanguageMap.speechLocale(sourceLanguage)
-        val targetLanguage = LanguageMap.translationCode(targetLanguage)
-        val targetVoice = LanguageMap.voiceName(targetLanguage)
-
         viewModelScope.launch {
-            when (val outcome = service.recognizeAndTranslate(sourceLocal, targetLanguage)) {
+            when (val outcome = service.recognizeAndTranslate(
+                sourceLang = sourceLanguage.speechLocale,
+                targetLangShort = targetLanguage.translationCode
+            )) {
                 is TranslationOutcome.Success -> {
-                    val turn = if (sourceLanguage == "Русский") {
+                    val turn = if (sourceLanguage == Language.RUSSIAN) {
                         ConversationTurn(
                             russianText = outcome.recognizedText,
                             armenianText = outcome.translatedText
@@ -42,15 +41,18 @@ class TranslatorViewModel(
                     }
                     conversation.add(turn)
                     isBusy = false
-                    service.speak(outcome.translatedText, targetVoice)
-                }
 
+                    try {
+                        service.speak(outcome.translatedText, targetLanguage.voiceName)
+                    } catch (e: Exception) {
+                        errorMessage = "Ошибка озвучки: ${e.message}"
+                    }
+                }
                 is TranslationOutcome.Error -> {
                     errorMessage = outcome.message
                     isBusy = false
                 }
             }
         }
-
     }
 }
