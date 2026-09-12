@@ -8,8 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -79,8 +78,6 @@ class MainActivity : ComponentActivity() {
 }
 
 
-
-
 @Composable
 fun Greeting(
     viewModel: TranslatorViewModel,
@@ -88,128 +85,152 @@ fun Greeting(
     onRequestMicPermission: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var sourceLanguage by remember { mutableStateOf(Language.RUSSIAN) }
-    val targetLanguage = sourceLanguage.other()
+    var topLanguage by remember { mutableStateOf(Language.ARMENIAN) }
+    val bottomLanguage = topLanguage.other()
 
-    // Каждый список хранит позицию прокрутки своей LazyColumn отдельно
-    val armenianListState = rememberLazyListState()
-    val russianListState = rememberLazyListState()
+    val topListState = rememberLazyListState()
+    val bottomListState = rememberLazyListState()
 
-    // Срабатывает заново каждый раз, когда меняется conversation.size —
-    // то есть когда добавляется новая реплика. Прокручиваем оба списка к последнему элементу.
     LaunchedEffect(viewModel.conversation.size) {
         val lastIndex = viewModel.conversation.size - 1
         if (lastIndex >= 0) {
-            armenianListState.animateScrollToItem(lastIndex)
-            russianListState.animateScrollToItem(lastIndex)
+            topListState.animateScrollToItem(lastIndex)
+            bottomListState.animateScrollToItem(lastIndex)
         }
     }
 
     Column(modifier = modifier.fillMaxSize()) {
 
-        // Верхняя панель — армянский
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(Color(0xFF1E1E1E)) // тёмно-серый фон, чтобы отличался от чёрного экрана
-        ) {
-            if (viewModel.conversation.isEmpty()) {
-                Text(
-                    text = "Здесь появится текст на армянском",
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .rotate(180f)
-                )
-            } else {
-                LazyColumn(
-                    state = armenianListState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .rotate(180f)
-                        .padding(12.dp)
-                ) {
-                    items(viewModel.conversation) { turn ->
-                        Text(text = turn.armenianText, modifier = Modifier.padding(vertical = 4.dp))
-                    }
-                }
-            }
-        }
+        // Верхняя зона — язык задаётся переменной topLanguage, а не жёстко
+        ConversationZone(
+            language = topLanguage,
+            conversation = viewModel.conversation,
+            listState = topListState,
+            hasMicPermission = hasMicPermission,
+            isBusy = viewModel.isBusy,
+            onRequestMicPermission = onRequestMicPermission,
+            onStart = { source, target -> viewModel.startTranslation(source, target) },
+            flipped = true, // верхняя зона всегда перевёрнута, независимо от языка
+            modifier = Modifier.weight(1f)
+        )
 
-// Центральная панель управления — фиксированной высоты, без weight
+        // Средняя полоска с кнопкой смены сторон
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.Black)
+                .padding(vertical = 8.dp)
         ) {
-            Text(text = "Language Bridge")
-
-            Row {
-                Button(
-                    onClick = { /* выбор языка вручную пока не реализован */ }
-                ) {
-                    Text(sourceLanguage.displayName)
-                }
-
-                Button(onClick = {
-                    sourceLanguage = sourceLanguage.other()
-                }) {
-                    Text("⇅")
-                }
-
-                Button(
-                    onClick = { /* выбор языка вручную пока не реализован */ }
-                ) {
-                    Text(targetLanguage.displayName)
-                }
-            }
-
             Button(onClick = {
-                if (hasMicPermission) {
-                    viewModel.startTranslation(sourceLanguage, targetLanguage)
-                } else {
-                    onRequestMicPermission()
-                }
+                topLanguage = topLanguage.other()
             }) {
-                Text(
-                    when {
-                        !hasMicPermission -> "Разрешить микрофон"
-                        viewModel.isBusy -> "Слушаю..."
-                        else -> "Продолжить"
-                    }
-                )
+                Text("⇅ Поменять стороны")
             }
 
             viewModel.errorMessage?.let {
-                Text("Ошибка: $it")
+                Text(
+                    text = "Ошибка: $it",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
         }
 
-        // Нижняя панель — русский, обычная ориентация
-        Box(
+        // Нижняя зона — всегда "другой" язык, обычная ориентация
+        ConversationZone(
+            language = bottomLanguage,
+            conversation = viewModel.conversation,
+            listState = bottomListState,
+            hasMicPermission = hasMicPermission,
+            isBusy = viewModel.isBusy,
+            onRequestMicPermission = onRequestMicPermission,
+            onStart = { source, target -> viewModel.startTranslation(source, target) },
+            flipped = false,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun ConversationZone(
+    language: Language,
+    conversation: List<com.example.languagebridge.data.ConversationTurn>,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    hasMicPermission: Boolean,
+    isBusy: Boolean,
+    onRequestMicPermission: () -> Unit,
+    onStart: (source: Language, target: Language) -> Unit,
+    flipped: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color(0xFF1E1E1E))
+            .then(if (flipped) Modifier.rotate(180f) else Modifier)
+    ) {
+        LazyColumn(
+            state = listState,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(Color(0xFF1E1E1E))
+                .padding(12.dp)
         ) {
-            if (viewModel.conversation.isEmpty()) {
-                Text(
-                    text = "Здесь появится текст на русском",
-                    modifier = Modifier
-                        .align(Alignment.Center)
-
-                )
-            } else {
-                LazyColumn(
-                    state = russianListState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp)
-                ) {
-                    items(viewModel.conversation) { turn ->
-                        Text(text = turn.russianText, modifier = Modifier.padding(vertical = 4.dp))
-                    }
-                }
+            items(conversation) { turn ->
+                Text(text = turn.textFor(language), modifier = Modifier.padding(vertical = 4.dp))
             }
         }
+
+        Button(
+            onClick = {
+                if (hasMicPermission) {
+                    onStart(language, language.other())
+                } else {
+                    onRequestMicPermission()
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Text(
+                when {
+                    !hasMicPermission -> "Разрешить микрофон"
+                    isBusy -> "Слушаю..."
+                    else -> "Говорить: ${language.displayName}"
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpeakButton(
+    language: Language,
+    hasMicPermission: Boolean,
+    isBusy: Boolean,
+    onRequestMicPermission: () -> Unit,
+    onStart: (source: Language, target: Language) -> Unit
+) {
+    Button(
+        onClick = {
+            if (hasMicPermission) {
+                onStart(language, language.other())
+            } else {
+                onRequestMicPermission()
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+    ) {
+        Text(
+            when {
+                !hasMicPermission -> "Разрешить микрофон"
+                isBusy -> "Слушаю..."
+                else -> "Говорить: ${language.displayName}"
+            }
+        )
     }
 }
