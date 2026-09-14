@@ -1,4 +1,4 @@
-package com.example.languagebridge.data
+package com.example.languagebridge.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -6,6 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.languagebridge.data.AzureTranslationService
+import com.example.languagebridge.data.ConversationTurn
+import com.example.languagebridge.data.Language
+import com.example.languagebridge.data.TranslationOutcome
 import kotlinx.coroutines.launch
 
 class TranslatorViewModel(
@@ -13,20 +17,26 @@ class TranslatorViewModel(
 ) : ViewModel() {
 
     val conversation = mutableStateListOf<ConversationTurn>()
+
     var isBusy by mutableStateOf(false)
         private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
-    fun startTranslation(sourceLanguage: Language, targetLanguage: Language) {
-        isBusy = true
+    fun startListening(sourceLanguage: Language) {
         errorMessage = null
+        isBusy = true
+        service.startListening(
+            sourceLang = sourceLanguage.speechLocale,
+            targetLangShort = sourceLanguage.other().translationCode
+        )
+    }
+
+    fun stopListening(sourceLanguage: Language) {
+        val targetLanguage = sourceLanguage.other()
 
         viewModelScope.launch {
-            when (val outcome = service.recognizeAndTranslate(
-                sourceLang = sourceLanguage.speechLocale,
-                targetLangShort = targetLanguage.translationCode
-            )) {
+            when (val outcome = service.stopListening()) {
                 is TranslationOutcome.Success -> {
                     val turn = if (sourceLanguage == Language.RUSSIAN) {
                         ConversationTurn(

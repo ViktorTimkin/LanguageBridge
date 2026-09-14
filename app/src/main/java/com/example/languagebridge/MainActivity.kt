@@ -8,32 +8,36 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.languagebridge.data.AzureTranslationService
+import com.example.languagebridge.data.ConversationTurn
 import com.example.languagebridge.data.Language
-import com.example.languagebridge.data.TranslatorViewModel
+import com.example.languagebridge.ui.TranslatorViewModel
 import com.example.languagebridge.ui.theme.LanguageBridgeTheme
 
 class MainActivity : ComponentActivity() {
@@ -54,6 +58,10 @@ class MainActivity : ComponentActivity() {
             this, Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
 
+        if (!micPermissionGranted) {
+            requestMicPermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
+
         val service = AzureTranslationService(
             speechKey = BuildConfig.AZURE_SPEECH_KEY,
             speechRegion = BuildConfig.AZURE_SPEECH_REGION
@@ -66,9 +74,6 @@ class MainActivity : ComponentActivity() {
                     Greeting(
                         viewModel = viewModel,
                         hasMicPermission = micPermissionGranted,
-                        onRequestMicPermission = {
-                            requestMicPermission.launch(Manifest.permission.RECORD_AUDIO)
-                        },
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -77,12 +82,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun Greeting(
     viewModel: TranslatorViewModel,
     hasMicPermission: Boolean,
-    onRequestMicPermission: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var topLanguage by remember { mutableStateOf(Language.ARMENIAN) }
@@ -101,20 +104,18 @@ fun Greeting(
 
     Column(modifier = modifier.fillMaxSize()) {
 
-        // Верхняя зона — язык задаётся переменной topLanguage, а не жёстко
         ConversationZone(
             language = topLanguage,
             conversation = viewModel.conversation,
             listState = topListState,
             hasMicPermission = hasMicPermission,
             isBusy = viewModel.isBusy,
-            onRequestMicPermission = onRequestMicPermission,
-            onStart = { source, target -> viewModel.startTranslation(source, target) },
-            flipped = true, // верхняя зона всегда перевёрнута, независимо от языка
+            onPressStart = { lang -> viewModel.startListening(lang) },
+            onPressEnd = { lang -> viewModel.stopListening(lang) },
+            flipped = true,
             modifier = Modifier.weight(1f)
         )
 
-        // Средняя полоска с кнопкой смены сторон
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -137,15 +138,14 @@ fun Greeting(
             }
         }
 
-        // Нижняя зона — всегда "другой" язык, обычная ориентация
         ConversationZone(
             language = bottomLanguage,
             conversation = viewModel.conversation,
             listState = bottomListState,
             hasMicPermission = hasMicPermission,
             isBusy = viewModel.isBusy,
-            onRequestMicPermission = onRequestMicPermission,
-            onStart = { source, target -> viewModel.startTranslation(source, target) },
+            onPressStart = { lang -> viewModel.startListening(lang) },
+            onPressEnd = { lang -> viewModel.stopListening(lang) },
             flipped = false,
             modifier = Modifier.weight(1f)
         )
@@ -155,15 +155,26 @@ fun Greeting(
 @Composable
 private fun ConversationZone(
     language: Language,
-    conversation: List<com.example.languagebridge.data.ConversationTurn>,
-    listState: androidx.compose.foundation.lazy.LazyListState,
+    conversation: List<ConversationTurn>,
+    listState: LazyListState,
     hasMicPermission: Boolean,
     isBusy: Boolean,
-    onRequestMicPermission: () -> Unit,
-    onStart: (source: Language, target: Language) -> Unit,
+    onPressStart: (Language) -> Unit,
+    onPressEnd: (Language) -> Unit,
     flipped: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    LaunchedEffect(isPressed) {
+        if (isPressed && hasMicPermission) {
+            onPressStart(language)
+        } else if (!isPressed) {
+            onPressEnd(language)
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -183,54 +194,20 @@ private fun ConversationZone(
         }
 
         Button(
-            onClick = {
-                if (hasMicPermission) {
-                    onStart(language, language.other())
-                } else {
-                    onRequestMicPermission()
-                }
-            },
+            onClick = { /* реакция идёт через interactionSource ниже */ },
+            interactionSource = interactionSource,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
             Text(
                 when {
-                    !hasMicPermission -> "Разрешить микрофон"
-                    isBusy -> "Слушаю..."
-                    else -> "Говорить: ${language.displayName}"
+                    !hasMicPermission -> "Нет разрешения на микрофон"
+                    isPressed -> "Слушаю..."
+                    isBusy -> "Обработка..."
+                    else -> "Зажмите, чтобы сказать: ${language.displayName}"
                 }
             )
         }
-    }
-}
-
-@Composable
-private fun SpeakButton(
-    language: Language,
-    hasMicPermission: Boolean,
-    isBusy: Boolean,
-    onRequestMicPermission: () -> Unit,
-    onStart: (source: Language, target: Language) -> Unit
-) {
-    Button(
-        onClick = {
-            if (hasMicPermission) {
-                onStart(language, language.other())
-            } else {
-                onRequestMicPermission()
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(12.dp)
-    ) {
-        Text(
-            when {
-                !hasMicPermission -> "Разрешить микрофон"
-                isBusy -> "Слушаю..."
-                else -> "Говорить: ${language.displayName}"
-            }
-        )
     }
 }

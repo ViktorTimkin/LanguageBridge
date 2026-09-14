@@ -1,6 +1,6 @@
 package com.example.languagebridge.data
 
-import com.microsoft.cognitiveservices.speech.CancellationDetails
+import com.microsoft.cognitiveservices.speech.PropertyId
 import com.microsoft.cognitiveservices.speech.ResultReason
 import com.microsoft.cognitiveservices.speech.SpeechConfig
 import com.microsoft.cognitiveservices.speech.SpeechSynthesizer
@@ -19,67 +19,79 @@ class AzureTranslationService(
     private val speechKey: String,
     private val speechRegion: String
 ) {
+    private var recognizer: TranslationRecognizer? = null
+    private var activeConfig: SpeechTranslationConfig? = null
+    private var targetLangShort: String = ""
 
-    suspend fun recognizeAndTranslate(
-        sourceLang: String,
-        targetLangShort: String
-    ): TranslationOutcome = withContext(Dispatchers.IO) {
+    // Копим сюда все фразы, распознанные, пока кнопка зажата
+    private val recognizedBuilder = StringBuilder()
+    private val translatedBuilder = StringBuilder()
+
+    // Вызывается по НАЖАТИЮ кнопки — запускает непрерывное прослушивание
+    fun startListening(sourceLang: String, targetLangShort: String) {
+        this.targetLangShort = targetLangShort
+        recognizedBuilder.clear()
+        translatedBuilder.clear()
+
         val config = SpeechTranslationConfig.fromSubscription(speechKey, speechRegion)
         config.speechRecognitionLanguage = sourceLang
         config.addTargetLanguage(targetLangShort)
+        config.setProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, "700")
 
-        // Даём больше времени на паузы внутри фразы, прежде чем считать её законченной
-        config.setProperty(
-            com.microsoft.cognitiveservices.speech.PropertyId.Speech_SegmentationSilenceTimeoutMs,
-            "1500" // было по умолчанию гораздо меньше
-        )
-        // Сколько ждать, прежде чем человек вообще начнёт говорить
-        config.setProperty(
-            com.microsoft.cognitiveservices.speech.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
-            "10000"
-        )
         val audioConfig = AudioConfig.fromDefaultMicrophoneInput()
-        val recognizer = TranslationRecognizer(config, audioConfig)
+        val newRecognizer = TranslationRecognizer(config, audioConfig)
+
+        // Подписываемся на событие "очередная фраза распознана и переведена"
+        newRecognizer.recognized.addEventListener { _, event ->
+            if (event.result.reason == ResultReason.TranslatedSpeech) {
+                val text = event.result.text
+                val translated = event.result.translations[targetLangShort] ?: ""
+                if (text.isNotBlank()) {
+                    if (recognizedBuilder.isNotEmpty()) recognizedBuilder.append(" ")
+                    recognizedBuilder.append(text)
+                }
+                if (translated.isNotBlank()) {
+                    if (translatedBuilder.isNotEmpty()) translatedBuilder.append(" ")
+                    translatedBuilder.append(translated)
+                }
+            }
+        }
+
+        recognizer = newRecognizer
+        activeConfig = config
+        newRecognizer.startContinuousRecognitionAsync().get()
+    }
+
+    // Вызывается по ОТПУСКАНИЮ кнопки — останавливает и возвращает итог
+    suspend fun stopListening(): TranslationOutcome = withContext(Dispatchers.IO) {
+        val activeRecognizer = recognizer
+            ?: return@withContext TranslationOutcome.Error("Распознавание не было запущено")
 
         try {
-            val result = recognizer.recognizeOnceAsync().get()
-
-            when (result.reason) {
-                ResultReason.TranslatedSpeech -> {
-                    val translated = result.translations[targetLangShort] ?: ""
-                    TranslationOutcome.Success(result.text, translated)
-                }
-                ResultReason.RecognizedSpeech -> {
-                    // Речь распознана, но перевод почему-то не пришёл
-                    TranslationOutcome.Error("Перевод не получен для языка $targetLangShort")
-                }
-                ResultReason.NoMatch -> {
-                    TranslationOutcome.Error("Речь не распознана. Попробуйте говорить чётче и ближе к микрофону.")
-                }
-                ResultReason.Canceled -> {
-                    val cancellation = CancellationDetails.fromResult(result)
-                    TranslationOutcome.Error(
-                        "Отменено: ${cancellation.reason}. ${cancellation.errorDetails}"
-                    )
-                }
-                else -> TranslationOutcome.Error("Неожиданный результат: ${result.reason}")
-            }
+            activeRecognizer.stopContinuousRecognitionAsync().get()
         } catch (e: Exception) {
-            TranslationOutcome.Error(e.message ?: "Unknown error")
+            return@withContext TranslationOutcome.Error(e.message ?: "Unknown error")
         } finally {
-            recognizer.close()
-            config.close()
+            activeRecognizer.close()
+            activeConfig?.close()
+            recognizer = null
+        }
+
+        if (recognizedBuilder.isEmpty()) {
+            TranslationOutcome.Error("Речь не распознана. Попробуйте ещё раз.")
+        } else {
+            TranslationOutcome.Success(
+                recognizedText = recognizedBuilder.toString(),
+                translatedText = translatedBuilder.toString()
+            )
         }
     }
 
-    suspend fun speak(
-        text: String,
-        voiceName: String
-    ): Unit = withContext(Dispatchers.IO) {
+    suspend fun speak(text: String, voiceName: String): Unit = withContext(Dispatchers.IO) {
         val config = SpeechConfig.fromSubscription(speechKey, speechRegion)
         config.speechSynthesisVoiceName = voiceName
-
-        val synthesizer = SpeechSynthesizer(config)
+        val audioOutputConfig = AudioConfig.fromDefaultSpeakerOutput()
+        val synthesizer = SpeechSynthesizer(config, audioOutputConfig)
         try {
             synthesizer.SpeakTextAsync(text).get()
         } finally {
