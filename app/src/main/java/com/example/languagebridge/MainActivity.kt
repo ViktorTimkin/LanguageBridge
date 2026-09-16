@@ -8,15 +8,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -29,16 +24,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.languagebridge.data.AzureTranslationService
-import com.example.languagebridge.data.ConversationTurn
 import com.example.languagebridge.data.Language
+import com.example.languagebridge.ui.ConversationZone
 import com.example.languagebridge.ui.TranslatorViewModel
 import com.example.languagebridge.ui.theme.LanguageBridgeTheme
+import androidx.compose.foundation.layout.imePadding
+import com.example.languagebridge.ui.TypedInputRow
 
 class MainActivity : ComponentActivity() {
 
@@ -64,7 +60,8 @@ class MainActivity : ComponentActivity() {
 
         val service = AzureTranslationService(
             speechKey = BuildConfig.AZURE_SPEECH_KEY,
-            speechRegion = BuildConfig.AZURE_SPEECH_REGION
+            speechRegion = BuildConfig.AZURE_SPEECH_REGION,
+            translatorKey = BuildConfig.AZURE_TRANSLATOR_KEY
         )
         val viewModel = TranslatorViewModel(service)
 
@@ -81,6 +78,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 
 @Composable
 fun Greeting(
@@ -102,7 +100,11 @@ fun Greeting(
         }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .imePadding() // ← отодвигает контент вверх, когда открыта клавиатура
+    ) {
 
         ConversationZone(
             language = topLanguage,
@@ -116,6 +118,7 @@ fun Greeting(
             modifier = Modifier.weight(1f)
         )
 
+        // Средняя панель — теперь тут и переключатель, и оба поля ввода
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -123,10 +126,24 @@ fun Greeting(
                 .background(Color.Black)
                 .padding(vertical = 8.dp)
         ) {
+            if (topLanguage == Language.RUSSIAN) {
+                TypedInputRow(
+                    language = topLanguage,
+                    onSend = { lang, text -> viewModel.translateTyped(lang, text) }
+                )
+            }
+
             Button(onClick = {
                 topLanguage = topLanguage.other()
             }) {
                 Text("⇅ Поменять стороны")
+            }
+
+            if (bottomLanguage == Language.RUSSIAN) {
+                TypedInputRow(
+                    language = bottomLanguage,
+                    onSend = { lang, text -> viewModel.translateTyped(lang, text) }
+                )
             }
 
             viewModel.errorMessage?.let {
@@ -149,65 +166,5 @@ fun Greeting(
             flipped = false,
             modifier = Modifier.weight(1f)
         )
-    }
-}
-
-@Composable
-private fun ConversationZone(
-    language: Language,
-    conversation: List<ConversationTurn>,
-    listState: LazyListState,
-    hasMicPermission: Boolean,
-    isBusy: Boolean,
-    onPressStart: (Language) -> Unit,
-    onPressEnd: (Language) -> Unit,
-    flipped: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    LaunchedEffect(isPressed) {
-        if (isPressed && hasMicPermission) {
-            onPressStart(language)
-        } else if (!isPressed) {
-            onPressEnd(language)
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color(0xFF1E1E1E))
-            .then(if (flipped) Modifier.rotate(180f) else Modifier)
-    ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            items(conversation) { turn ->
-                Text(text = turn.textFor(language), modifier = Modifier.padding(vertical = 4.dp))
-            }
-        }
-
-        Button(
-            onClick = { /* реакция идёт через interactionSource ниже */ },
-            interactionSource = interactionSource,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Text(
-                when {
-                    !hasMicPermission -> "Нет разрешения на микрофон"
-                    isPressed -> "Слушаю..."
-                    isBusy -> "Обработка..."
-                    else -> "Зажмите, чтобы сказать: ${language.displayName}"
-                }
-            )
-        }
     }
 }

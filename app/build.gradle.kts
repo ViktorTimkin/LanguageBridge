@@ -36,6 +36,11 @@ android {
             "AZURE_SPEECH_REGION",
             "\"${localProperties.getProperty("AZURE_SPEECH_REGION", "")}\""
         )
+        buildConfigField(
+            "String",
+            "AZURE_TRANSLATOR_KEY",
+            "\"${localProperties.getProperty("AZURE_TRANSLATOR_KEY", "")}\""
+        )
     }
 
 

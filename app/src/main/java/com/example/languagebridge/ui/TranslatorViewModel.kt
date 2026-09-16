@@ -65,4 +65,39 @@ class TranslatorViewModel(
             }
         }
     }
+    fun translateTyped(sourceLanguage: Language, text: String) {
+        if (text.isBlank()) return
+
+        errorMessage = null
+        isBusy = true
+        val targetLanguage = sourceLanguage.other()
+
+        viewModelScope.launch {
+            when (val outcome = service.translateText(
+                text = text,
+                sourceLangShort = sourceLanguage.translationCode,
+                targetLangShort = targetLanguage.translationCode
+            )) {
+                is TranslationOutcome.Success -> {
+                    val turn = if (sourceLanguage == Language.RUSSIAN) {
+                        ConversationTurn(russianText = outcome.recognizedText, armenianText = outcome.translatedText)
+                    } else {
+                        ConversationTurn(russianText = outcome.translatedText, armenianText = outcome.recognizedText)
+                    }
+                    conversation.add(turn)
+                    isBusy = false
+
+                    try {
+                        service.speak(outcome.translatedText, targetLanguage.voiceName)
+                    } catch (e: Exception) {
+                        errorMessage = "Ошибка озвучки: ${e.message}"
+                    }
+                }
+                is TranslationOutcome.Error -> {
+                    errorMessage = outcome.message
+                    isBusy = false
+                }
+            }
+        }
+    }
 }
