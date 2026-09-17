@@ -67,9 +67,8 @@ class AzureTranslationService(
     }
 
     // Вызывается по ОТПУСКАНИЮ кнопки — останавливает и возвращает итог
-    suspend fun stopListening(): TranslationOutcome = withContext(Dispatchers.IO) {
-        val activeRecognizer = recognizer
-            ?: return@withContext TranslationOutcome.Error("Распознавание не было запущено")
+    suspend fun stopListening(): TranslationOutcome? = withContext(Dispatchers.IO) {
+        val activeRecognizer = recognizer ?: return@withContext null
 
         try {
             activeRecognizer.stopContinuousRecognitionAsync().get()

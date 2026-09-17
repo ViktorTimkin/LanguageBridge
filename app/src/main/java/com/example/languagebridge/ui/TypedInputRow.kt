@@ -3,8 +3,11 @@ package com.example.languagebridge.ui
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.languagebridge.data.Language
+import com.example.languagebridge.ui.theme.AppColors
 
 @Composable
 fun TypedInputRow(
@@ -27,7 +31,15 @@ fun TypedInputRow(
         OutlinedTextField(
             value = typedText,
             onValueChange = { typedText = it },
-            placeholder = { Text(language.displayName) },
+            placeholder = { Text(language.displayName, color = AppColors.TextSecondary) },
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = AppColors.TextPrimary,
+                unfocusedTextColor = AppColors.TextPrimary,
+                focusedBorderColor = AppColors.AccentBlue,
+                unfocusedBorderColor = AppColors.TextSecondary,
+                cursorColor = AppColors.AccentBlue
+            ),
             modifier = Modifier.weight(1f)
         )
         Button(
@@ -37,9 +49,11 @@ fun TypedInputRow(
                     typedText = ""
                 }
             },
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue),
             modifier = Modifier.padding(start = 8.dp)
         ) {
-            Text("➤")
+            Text("➤", color = AppColors.TextPrimary)
         }
     }
 }

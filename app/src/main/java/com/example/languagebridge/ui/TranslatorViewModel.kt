@@ -36,7 +36,11 @@ class TranslatorViewModel(
         val targetLanguage = sourceLanguage.other()
 
         viewModelScope.launch {
-            when (val outcome = service.stopListening()) {
+            val outcome = service.stopListening() ?: run {
+                isBusy = false
+                return@launch
+            }
+            when (outcome ) {
                 is TranslationOutcome.Success -> {
                     val turn = if (sourceLanguage == Language.RUSSIAN) {
                         ConversationTurn(
