@@ -38,12 +38,12 @@ fun ConversationZone(
     onPressStart: (Language) -> Unit,
     onPressEnd: (Language) -> Unit,
     flipped: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    var isRecordingSession by remember { mutableStateOf(false) }
+    var isRecordingSession by remember { mutableStateOf(value = false) }
 
     LaunchedEffect(isPressed) {
         if (isPressed && hasMicPermission) {
@@ -59,7 +59,7 @@ fun ConversationZone(
         modifier = modifier
             .fillMaxWidth()
             .background(AppColors.ZoneBackground)
-            .then(if (flipped) Modifier.rotate(180f) else Modifier)
+            .then(if (flipped) Modifier.rotate(180f) else Modifier),
     ) {
         LazyColumn(
             state = listState,
@@ -67,7 +67,7 @@ fun ConversationZone(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(12.dp),
         ) {
             items(conversation) { turn ->
                 Text(
@@ -76,7 +76,7 @@ fun ConversationZone(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
                         .background(AppColors.BubbleBackground)
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                 )
             }
         }
@@ -88,7 +88,7 @@ fun ConversationZone(
             colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(12.dp),
         ) {
             Text(
                 text = when {
@@ -97,7 +97,7 @@ fun ConversationZone(
                     isBusy -> "Обработка..."
                     else -> "Зажмите, чтобы сказать: ${language.displayName}"
                 },
-                color = AppColors.TextPrimary
+                color = AppColors.TextPrimary,
             )
         }
     }

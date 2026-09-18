@@ -21,7 +21,7 @@ sealed class TranslationOutcome {
 class AzureTranslationService(
     private val speechKey: String,
     private val speechRegion: String,
-    private val translatorKey: String
+    private val translatorKey: String,
 ) {
     private var recognizer: TranslationRecognizer? = null
     private var activeConfig: SpeechTranslationConfig? = null
@@ -85,7 +85,7 @@ class AzureTranslationService(
         } else {
             TranslationOutcome.Success(
                 recognizedText = recognizedBuilder.toString(),
-                translatedText = translatedBuilder.toString()
+                translatedText = translatedBuilder.toString(),
             )
         }
     }
@@ -105,7 +105,7 @@ class AzureTranslationService(
     suspend fun translateText(
         text: String,
         sourceLangShort: String,
-        targetLangShort: String
+        targetLangShort: String,
     ): TranslationOutcome = withContext(Dispatchers.IO) {
         try {
             val url = URL(
@@ -131,7 +131,10 @@ class AzureTranslationService(
                     .getJSONArray("translations")
                     .getJSONObject(0)
                     .getString("text")
-                TranslationOutcome.Success(recognizedText = text, translatedText = translatedText)
+                TranslationOutcome.Success(
+                    recognizedText = text,
+                    translatedText = translatedText,
+                )
             } else {
                 val error = connection.errorStream?.bufferedReader()?.use { it.readText() }
                     ?: "HTTP ${connection.responseCode}"

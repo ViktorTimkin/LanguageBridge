@@ -23,7 +23,7 @@ import com.example.languagebridge.ui.theme.AppColors
 fun TypedInputRow(
     language: Language,
     onSend: (Language, String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var typedText by remember { mutableStateOf("") }
 
@@ -38,9 +38,9 @@ fun TypedInputRow(
                 unfocusedTextColor = AppColors.TextPrimary,
                 focusedBorderColor = AppColors.AccentBlue,
                 unfocusedBorderColor = AppColors.TextSecondary,
-                cursorColor = AppColors.AccentBlue
+                cursorColor = AppColors.AccentBlue,
             ),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Button(
             onClick = {
@@ -51,7 +51,7 @@ fun TypedInputRow(
             },
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue),
-            modifier = Modifier.padding(start = 8.dp)
+            modifier = Modifier.padding(start = 8.dp),
         ) {
             Text("➤", color = AppColors.TextPrimary)
         }

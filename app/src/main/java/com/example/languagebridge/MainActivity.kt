@@ -39,7 +39,7 @@ import com.example.languagebridge.ui.theme.AppColors
 
 class MainActivity : ComponentActivity() {
 
-    private var micPermissionGranted by mutableStateOf(false)
+    private var micPermissionGranted by mutableStateOf(value = false)
 
     private val requestMicPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -52,7 +52,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         micPermissionGranted = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.RECORD_AUDIO
+            this,
+            Manifest.permission.RECORD_AUDIO,
         ) == PackageManager.PERMISSION_GRANTED
 
         if (!micPermissionGranted) {
@@ -62,7 +63,7 @@ class MainActivity : ComponentActivity() {
         val service = AzureTranslationService(
             speechKey = BuildConfig.AZURE_SPEECH_KEY,
             speechRegion = BuildConfig.AZURE_SPEECH_REGION,
-            translatorKey = BuildConfig.AZURE_TRANSLATOR_KEY
+            translatorKey = BuildConfig.AZURE_TRANSLATOR_KEY,
         )
         val viewModel = TranslatorViewModel(service)
 
@@ -72,7 +73,7 @@ class MainActivity : ComponentActivity() {
                     Greeting(
                         viewModel = viewModel,
                         hasMicPermission = micPermissionGranted,
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding),
                     )
                 }
             }
@@ -85,7 +86,7 @@ class MainActivity : ComponentActivity() {
 fun Greeting(
     viewModel: TranslatorViewModel,
     hasMicPermission: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var topLanguage by remember { mutableStateOf(Language.ARMENIAN) }
     val bottomLanguage = topLanguage.other()
@@ -104,7 +105,7 @@ fun Greeting(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .imePadding() // ← отодвигает контент вверх, когда открыта клавиатура
+            .imePadding(),
     ) {
 
         ConversationZone(
@@ -116,7 +117,7 @@ fun Greeting(
             onPressStart = { lang -> viewModel.startListening(lang) },
             onPressEnd = { lang -> viewModel.stopListening(lang) },
             flipped = true,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
 
 
@@ -125,18 +126,18 @@ fun Greeting(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(AppColors.MiddlePanelBackground)
-                .padding(vertical = 8.dp)
+                .padding(vertical = 8.dp),
         ) {
             if (topLanguage == Language.RUSSIAN) {
                 TypedInputRow(
                     language = topLanguage,
-                    onSend = { lang, text -> viewModel.translateTyped(lang, text) }
+                    onSend = { lang, text -> viewModel.translateTyped(lang, text) },
                 )
             }
 
             Button(
                 onClick = { topLanguage = topLanguage.other() },
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue)
+                colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue),
             ) {
                 Text("⇅ Поменять стороны", color = AppColors.TextPrimary)
             }
@@ -144,7 +145,7 @@ fun Greeting(
             if (bottomLanguage == Language.RUSSIAN) {
                 TypedInputRow(
                     language = bottomLanguage,
-                    onSend = { lang, text -> viewModel.translateTyped(lang, text) }
+                    onSend = { lang, text -> viewModel.translateTyped(lang, text) },
                 )
             }
 
@@ -153,7 +154,7 @@ fun Greeting(
                     text = "Ошибка: $it",
                     color = AppColors.ErrorRed,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
         }
@@ -167,7 +168,7 @@ fun Greeting(
             onPressStart = { lang -> viewModel.startListening(lang) },
             onPressEnd = { lang -> viewModel.stopListening(lang) },
             flipped = false,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }

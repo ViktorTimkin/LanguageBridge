@@ -13,12 +13,12 @@ import com.example.languagebridge.data.TranslationOutcome
 import kotlinx.coroutines.launch
 
 class TranslatorViewModel(
-    private val service: AzureTranslationService
+    private val service: AzureTranslationService,
 ) : ViewModel() {
 
     val conversation = mutableStateListOf<ConversationTurn>()
 
-    var isBusy by mutableStateOf(false)
+    var isBusy by mutableStateOf(value = false)
         private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
@@ -28,7 +28,7 @@ class TranslatorViewModel(
         isBusy = true
         service.startListening(
             sourceLang = sourceLanguage.speechLocale,
-            targetLangShort = sourceLanguage.other().translationCode
+            targetLangShort = sourceLanguage.other().translationCode,
         )
     }
 
@@ -40,17 +40,17 @@ class TranslatorViewModel(
                 isBusy = false
                 return@launch
             }
-            when (outcome ) {
+            when (outcome) {
                 is TranslationOutcome.Success -> {
                     val turn = if (sourceLanguage == Language.RUSSIAN) {
                         ConversationTurn(
                             russianText = outcome.recognizedText,
-                            armenianText = outcome.translatedText
+                            armenianText = outcome.translatedText,
                         )
                     } else {
                         ConversationTurn(
                             russianText = outcome.translatedText,
-                            armenianText = outcome.recognizedText
+                            armenianText = outcome.recognizedText,
                         )
                     }
                     conversation.add(turn)
@@ -80,13 +80,19 @@ class TranslatorViewModel(
             when (val outcome = service.translateText(
                 text = text,
                 sourceLangShort = sourceLanguage.translationCode,
-                targetLangShort = targetLanguage.translationCode
+                targetLangShort = targetLanguage.translationCode,
             )) {
                 is TranslationOutcome.Success -> {
                     val turn = if (sourceLanguage == Language.RUSSIAN) {
-                        ConversationTurn(russianText = outcome.recognizedText, armenianText = outcome.translatedText)
+                        ConversationTurn(
+                            russianText = outcome.recognizedText,
+                            armenianText = outcome.translatedText,
+                        )
                     } else {
-                        ConversationTurn(russianText = outcome.translatedText, armenianText = outcome.recognizedText)
+                        ConversationTurn(
+                            russianText = outcome.translatedText,
+                            armenianText = outcome.recognizedText,
+                        )
                     }
                     conversation.add(turn)
                     isBusy = false
