@@ -116,6 +116,7 @@ fun Greeting(
             isBusy = viewModel.isBusy,
             onPressStart = { lang -> viewModel.startListening(lang) },
             onPressEnd = { lang -> viewModel.stopListening(lang) },
+            onSpeak = { turn -> viewModel.speakTurn(turn, topLanguage) },
             flipped = true,
             modifier = Modifier.weight(1f),
         )
@@ -167,6 +168,7 @@ fun Greeting(
             isBusy = viewModel.isBusy,
             onPressStart = { lang -> viewModel.startListening(lang) },
             onPressEnd = { lang -> viewModel.stopListening(lang) },
+            onSpeak = { turn -> viewModel.speakTurn(turn, bottomLanguage) },
             flipped = false,
             modifier = Modifier.weight(1f),
         )

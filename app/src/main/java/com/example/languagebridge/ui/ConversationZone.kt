@@ -13,16 +13,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.unit.dp
 import com.example.languagebridge.data.ConversationTurn
 import com.example.languagebridge.data.Language
@@ -37,6 +43,7 @@ fun ConversationZone(
     isBusy: Boolean,
     onPressStart: (Language) -> Unit,
     onPressEnd: (Language) -> Unit,
+    onSpeak: (ConversationTurn) -> Unit,
     flipped: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -70,14 +77,28 @@ fun ConversationZone(
                 .padding(12.dp),
         ) {
             items(conversation) { turn ->
-                Text(
-                    text = turn.textFor(language),
-                    color = AppColors.TextPrimary,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(AppColors.BubbleBackground)
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = turn.textFor(language),
+                        color = AppColors.TextPrimary,
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(AppColors.BubbleBackground)
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    )
+                    IconButton(onClick = { onSpeak(turn) }) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Replay audio",
+                            tint = AppColors.AccentBlue
+                        )
+                    }
+                }
             }
         }
 
