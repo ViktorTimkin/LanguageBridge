@@ -2,8 +2,18 @@ package com.example.languagebridge.data
 
 data class ConversationTurn(
     val russianText: String,
-    val armenianText: String
+    val armenianText: String,
+    val armenianTranscription: String? = null
 ) {
-    fun textFor(language: Language): String =
-        if (language == Language.RUSSIAN) russianText else armenianText
+    fun textFor(language: Language): String {
+        return if (language == Language.RUSSIAN) {
+            russianText
+        } else {
+            if (armenianTranscription != null) {
+                "$armenianText ($armenianTranscription)"
+            } else {
+                armenianText
+            }
+        }
+    }
 }

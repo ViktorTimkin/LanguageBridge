@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.languagebridge.data.ArmenianTransliterator
 import com.example.languagebridge.data.AzureTranslationService
 import com.example.languagebridge.data.ConversationTurn
 import com.example.languagebridge.data.Language
@@ -46,11 +47,13 @@ class TranslatorViewModel(
                         ConversationTurn(
                             russianText = outcome.recognizedText,
                             armenianText = outcome.translatedText,
+                            armenianTranscription = ArmenianTransliterator.transliterate(outcome.translatedText)
                         )
                     } else {
                         ConversationTurn(
                             russianText = outcome.translatedText,
                             armenianText = outcome.recognizedText,
+                            armenianTranscription = ArmenianTransliterator.transliterate(outcome.recognizedText)
                         )
                     }
                     conversation.add(turn)
@@ -87,11 +90,13 @@ class TranslatorViewModel(
                         ConversationTurn(
                             russianText = outcome.recognizedText,
                             armenianText = outcome.translatedText,
+                            armenianTranscription = ArmenianTransliterator.transliterate(outcome.translatedText)
                         )
                     } else {
                         ConversationTurn(
                             russianText = outcome.translatedText,
                             armenianText = outcome.recognizedText,
+                            armenianTranscription = ArmenianTransliterator.transliterate(outcome.recognizedText)
                         )
                     }
                     conversation.add(turn)
