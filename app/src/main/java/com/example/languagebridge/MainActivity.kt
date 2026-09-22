@@ -36,7 +36,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.ButtonDefaults
 import com.example.languagebridge.ui.TypedInputRow
 import com.example.languagebridge.ui.theme.AppColors
-
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 class MainActivity : ComponentActivity() {
 
     private var micPermissionGranted by mutableStateOf(value = false)
@@ -81,7 +82,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun Greeting(
     viewModel: TranslatorViewModel,
@@ -90,6 +90,10 @@ fun Greeting(
 ) {
     var topLanguage by remember { mutableStateOf(Language.ARMENIAN) }
     val bottomLanguage = topLanguage.other()
+
+    // Отдельное состояние: перевёрнут ли верхний чат прямо сейчас.
+    // Не связано с topLanguage — переключается независимо
+    var topZoneFlipped by remember { mutableStateOf(true) }
 
     val topListState = rememberLazyListState()
     val bottomListState = rememberLazyListState()
@@ -117,10 +121,9 @@ fun Greeting(
             onPressStart = { lang -> viewModel.startListening(lang) },
             onPressEnd = { lang -> viewModel.stopListening(lang) },
             onSpeak = { turn -> viewModel.speakTurn(turn, topLanguage) },
-            flipped = true,
+            flipped = topZoneFlipped,   // ← было жёстко true, теперь состояние
             modifier = Modifier.weight(1f),
         )
-
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -136,11 +139,20 @@ fun Greeting(
                 )
             }
 
-            Button(
-                onClick = { topLanguage = topLanguage.other() },
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue),
-            ) {
-                Text("⇅ Поменять стороны", color = AppColors.TextPrimary)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = { topLanguage = topLanguage.other() },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue),
+                ) {
+                    Text("⇅ Поменять стороны", color = AppColors.TextPrimary)
+                }
+
+                Button(
+                    onClick = { topZoneFlipped = !topZoneFlipped },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue),
+                ) {
+                    Text("🔄 Верх", color = AppColors.TextPrimary)
+                }
             }
 
             if (bottomLanguage == Language.RUSSIAN) {
