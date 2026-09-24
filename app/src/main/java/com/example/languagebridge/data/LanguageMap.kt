@@ -2,9 +2,9 @@ package com.example.languagebridge.data
 
 enum class Language(
     val displayName: String,
-    val speechLocale: String,       // код для распознавания речи, напр. "ru-RU"
-    val translationCode: String,    // короткий код для перевода, напр. "ru"
-    val voiceName: String           // голос для озвучки
+    val speechLocale: String,
+    val translationCode: String,
+    val voiceName: String
 ) {
     RUSSIAN(
         displayName = "Русский",

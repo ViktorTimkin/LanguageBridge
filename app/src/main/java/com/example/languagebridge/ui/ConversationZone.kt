@@ -45,6 +45,7 @@ fun ConversationZone(
     onPressEnd: (Language) -> Unit,
     onSpeak: (ConversationTurn) -> Unit,
     flipped: Boolean,
+    contentFlippedExtra: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -74,7 +75,8 @@ fun ConversationZone(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(12.dp)
+                .then(if (contentFlippedExtra) Modifier.rotate(180f) else Modifier),
         ) {
             items(conversation) { turn ->
                 Row(
@@ -119,6 +121,7 @@ fun ConversationZone(
                     else -> "Зажмите, чтобы сказать: ${language.displayName}"
                 },
                 color = AppColors.TextPrimary,
+                modifier = Modifier.then(if (contentFlippedExtra) Modifier.rotate(180f) else Modifier), // ← НОВОЕ
             )
         }
     }

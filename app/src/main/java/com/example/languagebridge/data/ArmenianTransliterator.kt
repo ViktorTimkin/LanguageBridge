@@ -34,7 +34,6 @@ object ArmenianTransliterator {
                 }
             }
 
-            // Handle contextual cases
             when (char) {
                 'ե' -> {
                     val isStart = i == 0 || !lowerText[i - 1].isLetter()

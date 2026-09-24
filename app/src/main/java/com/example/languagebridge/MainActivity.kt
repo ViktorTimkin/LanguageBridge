@@ -91,8 +91,6 @@ fun Greeting(
     var topLanguage by remember { mutableStateOf(Language.ARMENIAN) }
     val bottomLanguage = topLanguage.other()
 
-    // Отдельное состояние: перевёрнут ли верхний чат прямо сейчас.
-    // Не связано с topLanguage — переключается независимо
     var topZoneFlipped by remember { mutableStateOf(true) }
 
     val topListState = rememberLazyListState()
@@ -121,7 +119,8 @@ fun Greeting(
             onPressStart = { lang -> viewModel.startListening(lang) },
             onPressEnd = { lang -> viewModel.stopListening(lang) },
             onSpeak = { turn -> viewModel.speakTurn(turn, topLanguage) },
-            flipped = topZoneFlipped,   // ← было жёстко true, теперь состояние
+            flipped = true,
+            contentFlippedExtra = topZoneFlipped,
             modifier = Modifier.weight(1f),
         )
 

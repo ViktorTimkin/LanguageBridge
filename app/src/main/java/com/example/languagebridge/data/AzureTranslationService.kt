@@ -27,11 +27,9 @@ class AzureTranslationService(
     private var activeConfig: SpeechTranslationConfig? = null
     private var targetLangShort: String = ""
 
-    // Копим сюда все фразы, распознанные, пока кнопка зажата
     private val recognizedBuilder = StringBuilder()
     private val translatedBuilder = StringBuilder()
 
-    // Вызывается по НАЖАТИЮ кнопки — запускает непрерывное прослушивание
     fun startListening(sourceLang: String, targetLangShort: String) {
         this.targetLangShort = targetLangShort
         recognizedBuilder.clear()
@@ -66,7 +64,6 @@ class AzureTranslationService(
         newRecognizer.startContinuousRecognitionAsync().get()
     }
 
-    // Вызывается по ОТПУСКАНИЮ кнопки — останавливает и возвращает итог
     suspend fun stopListening(): TranslationOutcome? = withContext(Dispatchers.IO) {
         val activeRecognizer = recognizer ?: return@withContext null
 
