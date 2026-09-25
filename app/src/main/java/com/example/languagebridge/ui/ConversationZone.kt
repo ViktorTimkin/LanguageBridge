@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.example.languagebridge.data.ConversationTurn
 import com.example.languagebridge.data.Language
 import com.example.languagebridge.ui.theme.AppColors
-
+import androidx.compose.ui.graphics.Color
 @Composable
 fun ConversationZone(
     language: Language,
@@ -105,13 +105,18 @@ fun ConversationZone(
         }
 
         Button(
-            onClick = { /* реакция идёт через interactionSource ниже */ },
+            onClick = {},
             interactionSource = interactionSource,
             shape = RoundedCornerShape(0.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                contentColor = AppColors.TextPrimary,
+            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(12.dp)
+                .background(AppColors.flagBrush(language))
+                .background(Color.Black.copy(alpha = 0.35f)),
         ) {
             Text(
                 text = when {
@@ -121,7 +126,7 @@ fun ConversationZone(
                     else -> "Зажмите, чтобы сказать: ${language.displayName}"
                 },
                 color = AppColors.TextPrimary,
-                modifier = Modifier.then(if (contentFlippedExtra) Modifier.rotate(180f) else Modifier), // ← НОВОЕ
+                modifier = Modifier.then(if (contentFlippedExtra) Modifier.rotate(180f) else Modifier),
             )
         }
     }

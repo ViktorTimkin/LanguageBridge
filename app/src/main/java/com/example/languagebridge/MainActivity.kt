@@ -150,7 +150,7 @@ fun Greeting(
                     onClick = { topZoneFlipped = !topZoneFlipped },
                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentBlue),
                 ) {
-                    Text("🔄 Верх", color = AppColors.TextPrimary)
+                    Text("🔄 Верхний чат", color = AppColors.TextPrimary)
                 }
             }
 
