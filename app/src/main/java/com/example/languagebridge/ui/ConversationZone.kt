@@ -123,7 +123,7 @@ fun ConversationZone(
                     !hasMicPermission -> "Нет разрешения на микрофон"
                     isPressed -> "Слушаю..."
                     isBusy -> "Обработка..."
-                    else -> "Зажмите, чтобы сказать: ${language.displayName}"
+                    else -> language.holdToSpeakPrompt
                 },
                 color = AppColors.TextPrimary,
                 modifier = Modifier.then(if (contentFlippedExtra) Modifier.rotate(180f) else Modifier),
