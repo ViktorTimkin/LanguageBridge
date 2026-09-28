@@ -120,7 +120,11 @@ class TranslatorViewModel(
         val text = turn.textFor(language)
         viewModelScope.launch {
             try {
-                service.speak(text, language.voiceName)
+                service.speakSlow(
+                    text,
+                    language.voiceName,
+                    language.speechLocale
+                )
             } catch (e: Exception) {
                 errorMessage = "Ошибка озвучки: ${e.message}"
             }

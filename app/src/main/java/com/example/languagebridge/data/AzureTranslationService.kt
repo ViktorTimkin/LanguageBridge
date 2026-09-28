@@ -43,7 +43,6 @@ class AzureTranslationService(
         val audioConfig = AudioConfig.fromDefaultMicrophoneInput()
         val newRecognizer = TranslationRecognizer(config, audioConfig)
 
-        // Подписываемся на событие "очередная фраза распознана и переведена"
         newRecognizer.recognized.addEventListener { _, event ->
             if (event.result.reason == ResultReason.TranslatedSpeech) {
                 val text = event.result.text
@@ -94,6 +93,47 @@ class AzureTranslationService(
         val synthesizer = SpeechSynthesizer(config, audioOutputConfig)
         try {
             synthesizer.SpeakTextAsync(text).get()
+        } finally {
+            synthesizer.close()
+            config.close()
+        }
+    }
+    suspend fun speakSlow(
+        text: String,
+        voiceName: String,
+        languageCode: String
+    ): Unit = withContext(Dispatchers.IO) {
+        val config = SpeechConfig.fromSubscription(speechKey, speechRegion)
+        val audioOutputConfig = AudioConfig.fromDefaultSpeakerOutput()
+        val synthesizer = SpeechSynthesizer(config, audioOutputConfig)
+
+        try {
+            val escapedText = text
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;")
+
+            val words = escapedText.split(Regex("\\s+"))
+
+            val spokenText = words.joinToString(" ") { word ->
+                "$word<break time=\"550ms\"/>"
+            }
+
+            val ssml = """
+            <speak version="1.0"
+                   xmlns="http://www.w3.org/2001/10/synthesis"
+                   xml:lang="$languageCode">
+                <voice name="$voiceName">
+                    <prosody rate="25%">
+                        $spokenText
+                    </prosody>
+                </voice>
+            </speak>
+        """.trimIndent()
+
+            synthesizer.SpeakSsmlAsync(ssml).get()
         } finally {
             synthesizer.close()
             config.close()
