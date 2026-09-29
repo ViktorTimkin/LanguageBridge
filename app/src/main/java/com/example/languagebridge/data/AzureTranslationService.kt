@@ -118,7 +118,7 @@ class AzureTranslationService(
             val words = escapedText.split(Regex("\\s+"))
 
             val spokenText = words.joinToString(" ") { word ->
-                "$word<break time=\"550ms\"/>"
+                "$word<break time=\"700ms\"/>"
             }
 
             val ssml = """
@@ -126,7 +126,7 @@ class AzureTranslationService(
                    xmlns="http://www.w3.org/2001/10/synthesis"
                    xml:lang="$languageCode">
                 <voice name="$voiceName">
-                    <prosody rate="25%">
+                    <prosody rate="-30%">
                         $spokenText
                     </prosody>
                 </voice>
