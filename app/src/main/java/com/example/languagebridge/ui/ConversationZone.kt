@@ -29,11 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.languagebridge.data.ConversationTurn
 import com.example.languagebridge.data.Language
 import com.example.languagebridge.ui.theme.AppColors
-import androidx.compose.ui.graphics.Color
+
 @Composable
 fun ConversationZone(
     language: Language,
@@ -64,6 +65,7 @@ fun ConversationZone(
     }
 
     Column(
+        horizontalAlignment = Alignment.CenterHorizontally, // ← чтобы кнопка уже экрана была по центру
         modifier = modifier
             .fillMaxWidth()
             .background(AppColors.ZoneBackground)
@@ -105,16 +107,17 @@ fun ConversationZone(
         }
 
         Button(
-            onClick = {},
+            onClick = { /* реакция идёт через interactionSource ниже */ },
             interactionSource = interactionSource,
-            shape = RoundedCornerShape(0.dp),
+            shape = RoundedCornerShape(28.dp), // ← форма кнопки (влияет на область клика/ripple)
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
                 contentColor = AppColors.TextPrimary,
             ),
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
+                .fillMaxWidth(0.85f)          // ← не на всю ширину экрана
+                .padding(vertical = 12.dp)
+                .clip(RoundedCornerShape(28.dp))       // ← обрезаем фон по той же форме
                 .background(AppColors.flagBrush(language))
                 .background(Color.Black.copy(alpha = 0.35f)),
         ) {
