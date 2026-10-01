@@ -57,12 +57,13 @@ class TranslatorViewModel(
                         )
                     }
                     conversation.add(turn)
-                    isBusy = false
 
                     try {
                         service.speak(outcome.translatedText, targetLanguage.voiceName)
                     } catch (e: Exception) {
                         errorMessage = "Ошибка озвучки: ${e.message}"
+                    } finally {
+                        isBusy = false
                     }
                 }
                 is TranslationOutcome.Error -> {

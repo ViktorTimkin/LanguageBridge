@@ -15,16 +15,21 @@ object ArmenianTransliterator {
     )
 
     fun transliterate(text: String): String {
+        val cleanText = text
+            .replace("՞", "")
+            .replace("՜", "")
+            .replace("՛", "")
+            .replace("՝", "")
+
         val result = StringBuilder()
         var i = 0
-        val lowerText = text.lowercase(Locale.getDefault())
+        val lowerText = cleanText.lowercase(Locale.getDefault())
 
-        while (i < text.length) {
+        while (i < cleanText.length) {
             val char = lowerText[i]
-            val isUpper = text[i].isUpperCase()
+            val isUpper = cleanText[i].isUpperCase()
 
-            // Handle digrams
-            if (i + 1 < text.length) {
+            if (i + 1 < cleanText.length) {
                 val nextChar = lowerText[i + 1]
                 val digram = "$char$nextChar"
                 if (digram == "ու") {
@@ -47,6 +52,7 @@ object ArmenianTransliterator {
                     val isStart = i == 0 || !lowerText[i - 1].isLetter()
                     append(result, if (isStart) "йев" else "ев", isUpper)
                 }
+                'ւ' -> append(result, "в", isUpper)
                 else -> {
                     val transcription = map[char] ?: char.toString()
                     append(result, transcription, isUpper)

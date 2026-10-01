@@ -38,6 +38,8 @@ import com.example.languagebridge.ui.TypedInputRow
 import com.example.languagebridge.ui.theme.AppColors
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.languagebridge.ui.TranslatorViewModelFactory
 class MainActivity : ComponentActivity() {
 
     private var micPermissionGranted by mutableStateOf(value = false)
@@ -66,11 +68,13 @@ class MainActivity : ComponentActivity() {
             speechRegion = BuildConfig.AZURE_SPEECH_REGION,
             translatorKey = BuildConfig.AZURE_TRANSLATOR_KEY,
         )
-        val viewModel = TranslatorViewModel(service)
 
         setContent {
             LanguageBridgeTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    val viewModel: TranslatorViewModel = viewModel(
+                        factory = TranslatorViewModelFactory(service)
+                    )
                     Greeting(
                         viewModel = viewModel,
                         hasMicPermission = micPermissionGranted,

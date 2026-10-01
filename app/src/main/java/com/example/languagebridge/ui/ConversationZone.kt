@@ -65,7 +65,7 @@ fun ConversationZone(
     }
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally, // ← чтобы кнопка уже экрана была по центру
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxWidth()
             .background(AppColors.ZoneBackground)
@@ -107,17 +107,17 @@ fun ConversationZone(
         }
 
         Button(
-            onClick = { /* реакция идёт через interactionSource ниже */ },
+            onClick = { },
             interactionSource = interactionSource,
-            shape = RoundedCornerShape(28.dp), // ← форма кнопки (влияет на область клика/ripple)
+            shape = RoundedCornerShape(28.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
                 contentColor = AppColors.TextPrimary,
             ),
             modifier = Modifier
-                .fillMaxWidth(0.85f)          // ← не на всю ширину экрана
+                .fillMaxWidth(0.85f)
                 .padding(vertical = 12.dp)
-                .clip(RoundedCornerShape(28.dp))       // ← обрезаем фон по той же форме
+                .clip(RoundedCornerShape(28.dp))
                 .background(AppColors.flagBrush(language))
                 .background(Color.Black.copy(alpha = 0.35f)),
         ) {
