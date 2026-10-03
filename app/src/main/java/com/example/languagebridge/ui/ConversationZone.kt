@@ -34,6 +34,9 @@ import androidx.compose.ui.unit.dp
 import com.example.languagebridge.data.ConversationTurn
 import com.example.languagebridge.data.Language
 import com.example.languagebridge.ui.theme.AppColors
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 
 @Composable
 fun ConversationZone(
@@ -44,7 +47,8 @@ fun ConversationZone(
     isBusy: Boolean,
     onPressStart: (Language) -> Unit,
     onPressEnd: (Language) -> Unit,
-    onSpeak: (ConversationTurn) -> Unit,
+    onSpeakNormal: (ConversationTurn) -> Unit,
+    onSpeakSlow: (ConversationTurn) -> Unit,
     flipped: Boolean,
     contentFlippedExtra: Boolean = false,
     modifier: Modifier = Modifier,
@@ -95,19 +99,47 @@ fun ConversationZone(
                             .background(AppColors.BubbleBackground)
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     )
-                    IconButton(onClick = { onSpeak(turn) }) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Replay audio",
-                            tint = AppColors.AccentBlue
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { onSpeakNormal(turn) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Повторить на обычной скорости",
+                                tint = AppColors.AccentBlue
+                            )
+                        }
+                        IconButton(
+                            onClick = { onSpeakSlow(turn) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Box {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    tint = AppColors.AccentBlue.copy(alpha = 0.5f),
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .offset(x = (-3).dp)
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Повторить медленно",
+                                    tint = AppColors.AccentBlue,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .offset(x = 3.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
 
         Button(
-            onClick = { },
+            onClick = {},
             interactionSource = interactionSource,
             shape = RoundedCornerShape(28.dp),
             colors = ButtonDefaults.buttonColors(

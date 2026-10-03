@@ -117,15 +117,15 @@ class TranslatorViewModel(
         }
     }
 
-    fun speakTurn(turn: ConversationTurn, language: Language) {
+    fun speakTurn(turn: ConversationTurn, language: Language, slow: Boolean) {
         val text = turn.textFor(language)
         viewModelScope.launch {
             try {
-                service.speakSlow(
-                    text,
-                    language.voiceName,
-                    language.speechLocale
-                )
+                if (slow) {
+                    service.speakSlow(text, language.voiceName, language.speechLocale)
+                } else {
+                    service.speak(text, language.voiceName)
+                }
             } catch (e: Exception) {
                 errorMessage = "Ошибка озвучки: ${e.message}"
             }
